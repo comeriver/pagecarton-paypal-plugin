@@ -1,0 +1,12 @@
+application/databases/Application/notification.xml
+application/databases/Application/settings.xml
+application/databases/Application/Article/
+application/databases/Application/Log/View/
+application/databases/Application/Profile/
+application/databases/Application/Subscription/Checkout/order.xml
+application/databases/Ayoola/Doc/
+application/databases/Ayoola/Extension/Import/table.xml
+application/databases/PageCarton/Cron/
+application/module_files/
+application/.DS_Store
+.DS_Store
