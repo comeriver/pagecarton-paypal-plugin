@@ -75,7 +75,7 @@ class Paypal_Pay extends Paypal_Paypal
                                             return actions.order.create({
                                             purchase_units: [{
                                                 amount: {
-                                                value: "'.$parameters['amount'].'",
+                                                value: "' . $parameters['amount'] . '",
                                                 }
                                             }]
                                             });
@@ -128,7 +128,7 @@ class Paypal_Pay extends Paypal_Paypal
 			$result = array();
 
 			//The parameter after verify/ is the transaction reference to be verified
-			$url = '//api.sandbox.paypal.com/v2/checkout/orders/' . $_REQUEST['ref'];
+			$url = '//api.paypal.com/v2/checkout/orders/' . $_REQUEST['ref'];
 
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
@@ -137,7 +137,7 @@ class Paypal_Pay extends Paypal_Paypal
 				$ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']
 			);
 			curl_setopt(
-				$ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer EEr2WID74opHHCdUNCZIoM0lDsgG2OqD3Uv5YXZ_rhDyCDPKvhZ2hgLMeMbsxyVG6i5vDqd8X2msK5OZ']
+				$ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . Paypal_Settings::retrieve( 'secret_key' ) . '']
 			);
 			$request = curl_exec($ch);
 			curl_close($ch);
@@ -156,22 +156,9 @@ class Paypal_Pay extends Paypal_Paypal
 				$orderInfo['order_status'] = 'Payment Successful';
 			}
 
-		//	var_export( $orderInfo );
 			$orderInfo['order_random_code'] = $_REQUEST['ref'];
 			$orderInfo['gateway_response'] = $result;
-
-		//	var_export( $orderNumber );
-
 			self::changeStatus( $orderInfo );
-		//	$table->update( $orderInfo, array( 'order_id' => $orderNumber ) );
-
-		//	$response = new SimpleXMLElement(file_get_contents($url));
-
-	//		var_export( $orderInfo );
-		//	var_export( $result );
-
-			//	Code to change check status goes heres
-		//	if( )
 			return $orderInfo;
 	    }
 
