@@ -39,29 +39,17 @@ class Paypal_Pay extends Paypal_Paypal
 	 */
 	protected function init()
 	{
-	//	var_export( $this->getParameter() );
 
 		self::$_apiName = $this->getParameter( 'checkoutoption_name' ) ? : array_pop( explode( '_', get_class( $this ) ) );
 		if( ! $cart = self::getStorage()->retrieve() ){ return; }
 		$values = $cart['cart'];
 
-		/* 		if( ! self::isValidCurrency() )
-		{
-			$this->setViewContent( "<p class='badnews'>ERROR - Invalid Currency ({$values['settings']['currency_abbreviation']}).  " . static::$_apiName . " does not process this currency type.</p>" );
-			$this->setViewContent( "<p class='badnews'>Please select other payment methods.</p>" );
-			return;
-		}
-		*/	//
 		$parameters = static::getDefaultParameters();
-		//		$parameters['unotify'] = $parameters['notify_url'];
-		//		$parameters['ureturn'] = $parameters['success_url'];
-		//		$parameters['ucancel'] = $parameters['fail_url'];
-
 		//	var_export( $parameters );
 		$parameters['email'] = Ayoola_Form::getGlobalValue( 'email' ) ? : ( Ayoola_Form::getGlobalValue( 'email_address' ) ? : Ayoola_Application::getUserInfo( 'email' ) );
 		$parameters['reference'] = $this->getParameter( 'reference' ) ? : $parameters['order_number'];
-		$parameters['client_id'] = Application_Settings_Abstract::getSettings( 'paypal', 'client_id' );
-		$parameters['currency'] = Application_Settings_Abstract::getSettings( 'paypal', 'currency' );
+		$parameters['client_id'] = Paypal_Settings::retrieve( 'client_id' ) ? : 'ASD5Em1h1fmMoSM-LI8LiKz0Qu7STNfRSYRZYr6v_F3klJwXyrF9N_0BQJvs59bQrZyXX5bWm33MsdeJ'; 
+		$parameters['currency'] = Paypal_Settings::retrieve( 'currency' ) ? : 'USD';
 		$counter = 1;
 		$parameters['price'] = 0.00;
 		foreach( $values as $name => $value )
@@ -71,46 +59,41 @@ class Paypal_Pay extends Paypal_Paypal
 				$value = array_merge( self::getPriceInfo( $value['price_id'] ), $value );
 			}
 			@@$parameters['prod'] .= ' ' . $value['multiple'] . ' x ' . $value['subscription_label'];
-		//	@$parameters['quantity'] = $value['multiple'];
-		//		@$parameters['comments'] .= ' ' .  @$value['subscription_description'];
 			@$parameters['price'] += floatval( $value['price'] * $value['multiple'] );
-		//	var_export( $value );
 			$counter++;
 		}
 		$parameters['amount'] = ( $this->getParameter( 'amount' ) ? : $parameters['price'] ) ;
-		//	var_export( $parameters );
 
-		$this->setViewContent( '
+		$this->setViewContent( 
+                                '
 								<div id="paypal-button-container"></div>
-								<script src="https://www.paypal.com/sdk/js?client-id=ASD5Em1h1fmMoSM-LI8LiKz0Qu7STNfRSYRZYr6v_F3klJwXyrF9N_0BQJvs59bQrZyXX5bWm33MsdeJ&currency=USD">
-									</script>
+								<script src="https://www.paypal.com/sdk/js?client-id=' . $parameters['client_id']  . '&currency=' . $parameters['currency']  . '"></script>
 									<script>
-								  paypal.Buttons({
-								    createOrder: function(data, actions) {
-								      // This function sets up the details of the transaction, including the amount and line item details.
-								      return actions.order.create({
-								        purchase_units: [{
-								          amount: {
-								            value: "'.$parameters['amount'].'",
-								          }
-								        }]
-								      });
-								    },
-								    onApprove: function(data, actions) {
-								      // This function captures the funds from the transaction.
-											console.log( data );
+                                        paypal.Buttons({
+                                        createOrder: function(data, actions) {
+                                            // This function sets up the details of the transaction, including the amount and line item details.
+                                            return actions.order.create({
+                                            purchase_units: [{
+                                                amount: {
+                                                value: "'.$parameters['amount'].'",
+                                                }
+                                            }]
+                                            });
+                                        },
+                                        onApprove: function(data, actions) {
+                                            // This function captures the funds from the transaction.
+                                                console.log( data );
 
-											location.href = "' . $parameters['success_url'] . '?ref=" + data.orderID;
-											alert( data.orderID );
-								      return actions.order.capture().then(function(details) {
+                                                location.href = "' . $parameters['success_url'] . '?ref=" + data.orderID;
+                                            //    alert( data.orderID );
+                                                return actions.order.capture().then(function(details) {
 
-								      });
-								    }
-								  }).render("#paypal-button-container");
-								  //This function displays Smart Payment Buttons on your web page.
-								</script>
-		' );
-		//		$this->setViewContent( $this->getForm()->view() );
+                                            });
+                                        }
+                                        }).render("#paypal-button-container");
+                                        //This function displays Smart Payment Buttons on your web page.
+								    </script>' 
+                            );
 		}
 
 
@@ -162,21 +145,7 @@ class Paypal_Pay extends Paypal_Paypal
 			if ($request) {
 				$result = json_decode($request, true);
 			}
-			//Use the $result array
-					// var_export( $result );
-			//	var_export( $url );
-			//		var_export( $resString );
-				//	echo $xml->view();
-			//		exit();
-
-			//	confirm status
-	/* 		var_export( ! empty( $result['Error'] ) );
-			var_export( @$result['StatusCode'] !== '00' );
-			var_export( @$result['Amount'] != @$orderInfo['total'] );
-			var_export( @$result['Amount'] );
-			var_export( @$orderInfo['total'] );
-			var_export( @$result['AmountIntegrityCode'] !== '00' );
-	 */		if( empty( $result['status'] ) )
+    		if( empty( $result['status'] ) )
 			{
 				//	Payment was not successful.
 				$orderInfo['order_status'] = 'Payment Failed';
